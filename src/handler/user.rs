@@ -1,45 +1,8 @@
 use crate::dto::user::UserWithCountry;
-use crate::entity::{prelude::*, user};
 use crate::repository;
 use crate::AppState;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use log::error;
-use sea_orm::{entity::*, query::*};
-
-#[get("/old_user/{user_id}")]
-pub async fn get_user_by_id_old(
-    _req: HttpRequest,
-    data: web::Data<AppState>,
-    user_id: web::Path<i32>,
-) -> impl Responder {
-    let conn = (&data).get_db_conn();
-
-    match User::find()
-        .filter(user::Column::Id.eq(user_id.into_inner()))
-        .one(conn)
-        .await
-    {
-        Err(e) => internal_server_error_with_log(e),
-        Ok(user) => match user {
-            None => HttpResponse::NotFound().finish(),
-            Some(u) => {
-                println!("{:?}", &u);
-
-                let db_result = u.find_related(Country).one(conn).await;
-
-                match db_result {
-                    Err(e) => internal_server_error_with_log(e),
-                    Ok(c) => {
-                        let dto = UserWithCountry::from(&(u, c));
-                        println!("{:?}", &dto);
-
-                        HttpResponse::Ok().json(&dto)
-                    }
-                }
-            }
-        },
-    }
-}
 
 #[get("/user/{user_id}")]
 pub async fn get_user_by_id(
@@ -57,7 +20,7 @@ pub async fn get_user_by_id(
                 let dto = UserWithCountry::from(&user_with_country);
                 println!("{:?}", &dto);
 
-                HttpResponse::Ok().json(&dto)
+                HttpResponse::Ok().json(dto)
             }
         },
     }
@@ -71,7 +34,7 @@ fn internal_server_error_with_log(e: impl std::fmt::Debug) -> HttpResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entity::country;
+    use crate::entity::{country, user};
     use actix_web::{test, web::Bytes, App};
     use chrono::NaiveDateTime;
     use sea_orm::{DatabaseBackend, MockDatabase};
@@ -95,8 +58,7 @@ mod tests {
 
         // Create MockDatabase with mock query results
         let db_conn = MockDatabase::new(DatabaseBackend::MySql)
-            .append_query_results(vec![vec![u]])
-            .append_query_results(vec![vec![c]])
+            .append_query_results(vec![vec![(u.clone(), c.clone())]])
             .into_connection();
 
         let d = web::Data::new(AppState::new(db_conn));

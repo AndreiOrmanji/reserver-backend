@@ -5,13 +5,17 @@ authors = ["Andrei Ormanji <andrew.ormanzhi@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-actix-cors = "0.6.0-beta.8"
-actix-identity = "0.3"
-actix-redis = "0.9"
-actix-tls = "3.0.0"
-actix-web = "4.0.0-beta.18"
-actix-web-grants = "2.2"
-actix-web-httpauth = "0.6.0-beta.7"
+actix-cors = "0.6.0"
+actix-identity = "0.4"
+actix-redis = "0.10"
+actix-tls = "3.0"
+actix-web = "4.0"
+actix-http = "3.0"
+actix-http-test = "3.0.0-beta.13"
+actix-test = "0.1.0-beta.13"
+actix-files = "0.6"
+actix-web-grants = "3.0.0-beta.6"
+actix-web-httpauth = "0.6"
 actix-web-validator = "2.2"
 anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
@@ -22,7 +26,9 @@ futures-util = "0.3"
 log = "0.4"
 sea-orm = { version = "^0", features = [
     "debug-print",
-    "sqlx-mysql",
+    # "sqlx-sqlite",
+    # "sqlx-mysql",
+    "sqlx-postgres",
     "runtime-actix-native-tls",
     "macros",
     "with-json",
@@ -35,8 +41,7 @@ serde_derive = "1.0"
 serde_json = "1.0"
 serde_qs = "0.8"
 serde_urlencoded = "0.7"
-# sqlx = {version = "0.5", features = [ "runtime-actix-native-tls", "macros", "migrate", "uuid", "mysql", "chrono", "json" ]}
-tokio = "1.14"
+tokio = { version = "1.16", features = ["rt-multi-thread"] }
 validator = { version = "0.14", features = ["derive", "validator_derive"] }
 
 [dev-dependencies]
@@ -44,6 +49,8 @@ sea-orm = { version = "^0", features = [
     "debug-print",
     "mock",
     "sqlx-mysql",
+    "sqlx-postgres",
+    "sqlx-sqlite",
     "runtime-actix-native-tls",
     "macros",
     "with-json",

@@ -4,7 +4,7 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use anyhow::Result as AnyhowResult;
 use dotenv;
 use sea_orm::{ConnectOptions, Database};
-use std::{env, time::Duration};
+use std::{env, time::Duration, convert::Infallible};
 
 mod core;
 mod dto;
@@ -40,7 +40,7 @@ async fn main() -> AnyhowResult<()> {
         .parse::<u16>()
         .expect("PORT should be a u16");
 
-    log::info!("using mysql database at: {}", &db_url);
+    log::info!("using database at: {}", &db_url);
 
     let mut opt = ConnectOptions::new(db_url);
     opt.max_connections(db_max_connections)
@@ -50,7 +50,6 @@ async fn main() -> AnyhowResult<()> {
         .idle_timeout(Duration::from_secs(8));
 
     let db_pool = Database::connect(opt).await?;
-
     let app_state = web::Data::new(AppState::new(db_pool));
 
     let server = HttpServer::new(move || {
@@ -59,10 +58,12 @@ async fn main() -> AnyhowResult<()> {
             .wrap(middleware::Logger::default())
             .route(
                 "/",
-                web::get().to(|| HttpResponse::Ok().body(r#"Learn Rust project"#)),
+                web::get().to(|| async {
+                    Ok::<_, Infallible>(HttpResponse::Ok().body(r#"Learn Rust project"#))
+                }),
             )
             .service(get_user_by_id)
-            .default_service(web::route().to(|| HttpResponse::MethodNotAllowed()))
+            .default_service(web::route().to(HttpResponse::MethodNotAllowed))
     })
     .bind((host, port))?;
 
