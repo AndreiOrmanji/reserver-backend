@@ -4,7 +4,7 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use anyhow::Result as AnyhowResult;
 use dotenv;
 use sea_orm::{ConnectOptions, Database};
-use std::{env, time::Duration, convert::Infallible};
+use std::{convert::Infallible, env, time::Duration};
 
 mod core;
 mod dto;

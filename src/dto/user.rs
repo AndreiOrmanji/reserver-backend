@@ -8,7 +8,7 @@ pub struct UserWithCountry {
     pub email: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub age: Option<i8>,
+    pub age: Option<i32>,
     pub country: Option<Country>,
     pub created_at: Option<NaiveDateTime>,
 }
