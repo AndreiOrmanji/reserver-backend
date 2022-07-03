@@ -1,16 +1,16 @@
-use crate::entity::{country::Model as Country, user::Model as User};
-use chrono::NaiveDateTime;
+use sea_orm::{entity::prelude::*, prelude::DateTimeWithTimeZone};
+use entity::{country::Model as Country, user::Model as User};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserWithCountry {
     pub id: i32,
     pub email: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub age: Option<i32>,
     pub country: Option<Country>,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: Option<DateTimeWithTimeZone>,
 }
 
 impl From<&(User, Option<Country>)> for UserWithCountry {
@@ -22,7 +22,6 @@ impl From<&(User, Option<Country>)> for UserWithCountry {
             email: user.email.clone(),
             first_name: user.first_name.clone(),
             last_name: user.last_name.clone(),
-            age: user.age,
             created_at: user.created_at,
         }
     }

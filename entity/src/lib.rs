@@ -2,4 +2,7 @@
 pub mod prelude;
 
 pub mod country;
+pub mod delivery_center;
+pub mod delivery_center_floor;
 pub mod user;
+pub mod work_desk;

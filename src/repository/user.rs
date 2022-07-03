@@ -1,11 +1,9 @@
-use crate::entity::{country, prelude::*, user};
-
-use sea_orm::{entity::*, query::*};
-use sea_orm::{DatabaseConnection, DbErr};
+use entity::{country, prelude::*, user};
+use sea_orm::{entity::*, query::*, DatabaseConnection, DbErr};
 
 pub async fn find_user_with_country_by_id(
-    user_id: i32,
     conn: &DatabaseConnection,
+    user_id: i32,
 ) -> Result<Option<(user::Model, Option<country::Model>)>, DbErr> {
     User::find()
         .find_also_related(Country)
@@ -18,8 +16,8 @@ pub async fn find_user_with_country_by_id(
 mod test {
     use super::*;
 
-    use chrono::NaiveDateTime;
-    use sea_orm::{DatabaseBackend, MockDatabase, Transaction};
+    use time_tz::{DateTime, NaiveDateTime, Utc};
+    use sea_orm::{DatabaseBackend, MockDatabase, Transaction, prelude::DateTimeWithTimeZone};
     use std::str::FromStr;
 
     #[actix_web::test]
@@ -35,25 +33,47 @@ mod test {
             email: Some("a@n.com".into()),
             first_name: Some("mF_9.B5f-4.1JqM".into()),
             last_name: Some("TestNameLast".into()),
-            age: Some(22),
             country_id: Some(c.id),
-            created_at: Some(NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap()),
+            created_at: Some(::from_str(
+                NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap(),
+                Utc,
+            )),
         };
 
-        let db_conn = MockDatabase::new(DatabaseBackend::MySql)
+        let db_backend = DatabaseBackend::MySql;
+        let db_conn = MockDatabase::new(db_backend)
             .append_query_results(vec![vec![(u.clone(), c.clone())]])
             .into_connection();
 
         assert_eq!(
-            Ok(Some((u, Some(c)))),
-            super::find_user_with_country_by_id(user_id, &db_conn).await
+            Ok(Some((u.clone(), Some(c.clone())))),
+            super::find_user_with_country_by_id(&db_conn, user_id).await
         );
 
         assert_eq!(
             db_conn.into_transaction_log(),
             vec![Transaction::from_sql_and_values(
                 DatabaseBackend::MySql,
-                r#"SELECT `users`.`id` AS `A_id`, `users`.`email` AS `A_email`, `users`.`first_name` AS `A_first_name`, `users`.`last_name` AS `A_last_name`, `users`.`age` AS `A_age`, `users`.`country_id` AS `A_country_id`, `users`.`created_at` AS `A_created_at`, `countries`.`id` AS `B_id`, `countries`.`name` AS `B_name` FROM `users` LEFT JOIN `countries` ON `users`.`country_id` = `countries`.`id` WHERE `users`.`id` = ? LIMIT ?"#,
+                r#"SELECT `users`.`id` AS `A_id`, `users`.`email` AS `A_email`, `users`.`first_name` AS `A_first_name`, `users`.`last_name` AS `A_last_name`, `users`.`country_id` AS `A_country_id`, `users`.`created_at` AS `A_created_at`, `countries`.`id` AS `B_id`, `countries`.`name` AS `B_name` FROM `users` LEFT JOIN `countries` ON `users`.`country_id` = `countries`.`id` WHERE `users`.`id` = ? LIMIT ?"#,
+                vec![Value::Int(Some(user_id)), Value::BigUnsigned(Some(1u64))]
+            ),]
+        );
+
+        let db_backend = DatabaseBackend::Postgres;
+        let db_conn = MockDatabase::new(db_backend)
+            .append_query_results(vec![vec![(u.clone(), c.clone())]])
+            .into_connection();
+
+        assert_eq!(
+            Ok(Some((u, Some(c)))),
+            super::find_user_with_country_by_id(&db_conn, user_id).await
+        );
+
+        assert_eq!(
+            db_conn.into_transaction_log(),
+            vec![Transaction::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                r#"SELECT "users"."id" AS "A_id", "users"."email" AS "A_email", "users"."first_name" AS "A_first_name", "users"."last_name" AS "A_last_name", "users"."country_id" AS "A_country_id", "users"."created_at" AS "A_created_at", "countries"."id" AS "B_id", "countries"."name" AS "B_name" FROM "users" LEFT JOIN "countries" ON "users"."country_id" = "countries"."id" WHERE "users"."id" = $1 LIMIT $2"#,
                 vec![Value::Int(Some(user_id)), Value::BigUnsigned(Some(1u64))]
             ),]
         );

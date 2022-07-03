@@ -3,26 +3,25 @@ extern crate log;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use anyhow::Result as AnyhowResult;
 use dotenv;
+use listenfd::ListenFd;
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
 use std::{convert::Infallible, env, time::Duration};
 
 mod core;
 mod dto;
-mod entity;
 mod handler;
 mod repository;
 
 use crate::core::AppState;
-use handler::user::*;
+use handler::{user::*, work_desk::*};
 
 #[actix_web::main]
 async fn main() -> AnyhowResult<()> {
     dotenv::from_filename(".env").ok();
     dotenv::from_filename(".env.local").ok();
 
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .init();
+    tracing_subscriber::fmt::init();
 
     println!(
         "{:?}",
@@ -39,6 +38,7 @@ async fn main() -> AnyhowResult<()> {
         .expect("PORT is not set in .env file")
         .parse::<u16>()
         .expect("PORT should be a u16");
+    let server_url = format!("{}:{}", host, port);
 
     log::info!("using database at: {}", &db_url);
 
@@ -50,9 +50,12 @@ async fn main() -> AnyhowResult<()> {
         .idle_timeout(Duration::from_secs(8));
 
     let db_pool = Database::connect(opt).await?;
+
+    Migrator::up(&db_pool, None).await?;
+
     let app_state = web::Data::new(AppState::new(db_pool));
 
-    let server = HttpServer::new(move || {
+    let mut server = HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
             .wrap(middleware::Logger::default())
@@ -62,12 +65,19 @@ async fn main() -> AnyhowResult<()> {
                     Ok::<_, Infallible>(HttpResponse::Ok().body(r#"Learn Rust project"#))
                 }),
             )
+            .service(get_floor_by_id_of_center_by_id)
             .service(get_user_by_id)
             .default_service(web::route().to(HttpResponse::MethodNotAllowed))
-    })
-    .bind((host, port))?;
+    });
 
-    log::info!("Starting server");
+    // create server and try to serve over socket if possible
+    let mut listenfd = ListenFd::from_env();
+    server = match listenfd.take_tcp_listener(0)? {
+        Some(listener) => server.listen(listener)?,
+        None => server.bind(&server_url)?,
+    };
+
+    println!("Starting server at {}", server_url);
     server.run().await?;
 
     Ok(())

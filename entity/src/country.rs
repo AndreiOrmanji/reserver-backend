@@ -3,7 +3,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "countries")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -14,12 +14,20 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_many = "super::user::Entity")]
-    User,
+    Users,
+    #[sea_orm(has_many = "super::delivery_center::Entity")]
+    DeliveryCenters,
 }
 
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::User.def()
+        Relation::Users.def()
+    }
+}
+
+impl Related<super::delivery_center::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DeliveryCenters.def()
     }
 }
 

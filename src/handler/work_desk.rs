@@ -1,29 +1,33 @@
-use crate::dto::user::UserWithCountry;
+use crate::dto::{floor_with_work_desks::FloorWithWorkDesks};
 use crate::repository;
 use crate::AppState;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
-use log::{error, info};
+use log::error;
 
-#[get("/user/{user_id}")]
-pub async fn get_user_by_id(
+#[get("/delivery-center/{center_id}/floor/{floor_id}/work_desks")]
+pub async fn get_floor_by_id_of_center_by_id(
     _req: HttpRequest,
     data: web::Data<AppState>,
-    user_id: web::Path<i32>,
+    params: web::Path<(i32, i32)>,
 ) -> impl Responder {
+    let (center_id, floor_id) = params.into_inner();
     let conn = (&data).get_db_conn();
 
-    match repository::user::find_user_with_country_by_id(conn, user_id.into_inner()).await {
+    match repository::floor::get_floor_by_id_of_center_by_id(conn, center_id, floor_id).await {
         Err(e) => internal_server_error_with_log(e),
 
-        Ok(option_user_with_country) => match option_user_with_country {
+        Ok(option_floor_with_center) => match option_floor_with_center {
             None => HttpResponse::NotFound().finish(),
 
-            Some(user_with_country) => {
-                let dto = UserWithCountry::from(&user_with_country);
-                info!("{:?}", &dto);
+            Some((floor, Some(center))) => {
+                match repository::work_desk::get_work_desks_by_floor_id(conn, floor.id).await {
+                    Err(e) => internal_server_error_with_log(e),
 
-                HttpResponse::Ok().json(dto)
+                    Ok(work_desks) => HttpResponse::Ok()
+                        .json(FloorWithWorkDesks::from(&(floor, center, work_desks))),
+                }
             }
+            _ => HttpResponse::InternalServerError().finish(),
         },
     }
 }
@@ -32,13 +36,13 @@ fn internal_server_error_with_log(e: impl std::fmt::Debug) -> HttpResponse {
     error!("{:?}", e);
     HttpResponse::InternalServerError().finish()
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
+    use entity::{country, user};
     use actix_web::{test, web::Bytes, App};
     use chrono::{DateTime, NaiveDateTime, Utc};
-    use entity::{country, user};
     use sea_orm::{DatabaseBackend, MockDatabase};
     use std::str::FromStr;
 
@@ -54,10 +58,7 @@ mod tests {
             first_name: Some("mF_9.B5f-4.1JqM".into()),
             last_name: Some("TestNameLast".into()),
             country_id: Some(c.id),
-            created_at: Some(DateTime::from_utc(
-                NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap(),
-                Utc,
-            )),
+            created_at: Some(DateTime::from_utc(NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap(), Utc)),
         };
 
         // Create MockDatabase with mock query results
@@ -79,3 +80,4 @@ mod tests {
         assert_eq!(result, Bytes::from_static(b"{\"id\":1,\"email\":\"a@n.com\",\"first_name\":\"mF_9.B5f-4.1JqM\",\"last_name\":\"TestNameLast\",\"country\":{\"id\":1,\"name\":\"Moldova\"},\"created_at\":\"2022-01-01T16:46:28Z\"}"));
     }
 }
+ */
