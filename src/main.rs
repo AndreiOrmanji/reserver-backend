@@ -1,20 +1,17 @@
-extern crate log;
-
+use crate::core::AppState;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use anyhow::Result as AnyhowResult;
-use dotenv;
+use handler::{user::*, work_desk::*};
 use listenfd::ListenFd;
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{ConnectOptions, Database};
-use std::{convert::Infallible, env, time::Duration};
 
 mod core;
 mod dto;
 mod handler;
 mod repository;
 
-use crate::core::AppState;
-use handler::{user::*, work_desk::*};
+use sea_orm::{ConnectOptions, Database};
+use std::{convert::Infallible, env, time::Duration};
 
 #[actix_web::main]
 async fn main() -> AnyhowResult<()> {

@@ -1,6 +1,7 @@
-use sea_orm::{entity::prelude::*, prelude::DateTimeWithTimeZone};
 use entity::{country::Model as Country, user::Model as User};
+use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use time::serde::rfc3339;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -10,7 +11,8 @@ pub struct UserWithCountry {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub country: Option<Country>,
-    pub created_at: Option<DateTimeWithTimeZone>,
+    #[serde(with = "rfc3339::option")]
+    pub created_at: Option<TimeDateTimeWithTimeZone>,
 }
 
 impl From<&(User, Option<Country>)> for UserWithCountry {

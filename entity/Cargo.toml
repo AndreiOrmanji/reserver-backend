@@ -17,8 +17,10 @@ sea-orm = { version = "^0", features = [
     # "sqlx-mysql",
     "sqlx-postgres",
     "macros",
+    "with-time",
     "with-chrono",
     "with-json",
     "with-rust_decimal",
     "with-uuid",
 ], default-features = false }
+time = { version = "0.3", features = ["serde-human-readable", "serde-well-known"] }

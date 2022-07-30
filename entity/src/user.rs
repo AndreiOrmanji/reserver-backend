@@ -2,6 +2,7 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use time::serde::rfc3339;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "users")]
@@ -12,8 +13,9 @@ pub struct Model {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub country_id: Option<i32>,
-    #[sea_orm(extra="DEFAULT CURRENT_TIMESTAMP")]
-    pub created_at: Option<DateTimeWithTimeZone>,
+    #[sea_orm(extra = "DEFAULT CURRENT_TIMESTAMP")]
+    #[serde(with = "rfc3339::option")]
+    pub created_at: Option<TimeDateTimeWithTimeZone>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

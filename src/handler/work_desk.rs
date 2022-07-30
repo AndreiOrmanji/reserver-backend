@@ -1,4 +1,4 @@
-use crate::dto::{floor_with_work_desks::FloorWithWorkDesks};
+use crate::dto::floor_with_work_desks::FloorWithWorkDesks;
 use crate::repository;
 use crate::AppState;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};

@@ -39,10 +39,7 @@ impl From<&(DeliveryCenterFloor, DeliveryCenter, Vec<WorkDesk>)> for FloorWithWo
             name: floor.name.clone(),
             delivery_center_id: center.id,
             delivery_center_name: center.name.clone(),
-            desks: work_desks
-                .iter()
-                .map(|work_desk| WorkDeskDefault::from(work_desk))
-                .collect(),
+            desks: work_desks.iter().map(WorkDeskDefault::from).collect(),
         }
     }
 }

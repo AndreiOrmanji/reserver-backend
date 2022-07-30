@@ -10,7 +10,7 @@ pub struct BadAuthHeaderError;
 
 impl Display for BadAuthHeaderError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{{\"{}\":\"{}\"}}", "message", "test")
+        write!(f, "{{\"message\":\"test\"}}")
     }
 }
 

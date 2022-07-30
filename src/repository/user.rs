@@ -16,9 +16,9 @@ pub async fn find_user_with_country_by_id(
 mod test {
     use super::*;
 
-    use time_tz::{DateTime, NaiveDateTime, Utc};
-    use sea_orm::{DatabaseBackend, MockDatabase, Transaction, prelude::DateTimeWithTimeZone};
-    use std::str::FromStr;
+    use sea_orm::{prelude::TimeDateTimeWithTimeZone, DatabaseBackend, MockDatabase, Transaction};
+    use time::format_description::well_known::Rfc3339;
+    // use time_tz::{DateTime, NaiveDateTime, Utc};
 
     #[actix_web::test]
     async fn test_find_user_with_country_by_id() {
@@ -28,16 +28,16 @@ mod test {
             id: user_id,
             name: "Moldova".into(),
         };
+
         let u = user::Model {
             id: user_id,
             email: Some("a@n.com".into()),
             first_name: Some("mF_9.B5f-4.1JqM".into()),
             last_name: Some("TestNameLast".into()),
             country_id: Some(c.id),
-            created_at: Some(::from_str(
-                NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap(),
-                Utc,
-            )),
+            created_at: Some(
+                TimeDateTimeWithTimeZone::parse("2022-01-01T16:46:28Z", &Rfc3339).unwrap(),
+            ),
         };
 
         let db_backend = DatabaseBackend::MySql;

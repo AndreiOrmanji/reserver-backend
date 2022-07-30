@@ -37,10 +37,9 @@ fn internal_server_error_with_log(e: impl std::fmt::Debug) -> HttpResponse {
 mod tests {
     use super::*;
     use actix_web::{test, web::Bytes, App};
-    use chrono::{DateTime, NaiveDateTime, Utc};
     use entity::{country, user};
-    use sea_orm::{DatabaseBackend, MockDatabase};
-    use std::str::FromStr;
+    use sea_orm::{entity::prelude::TimeDateTimeWithTimeZone, DatabaseBackend, MockDatabase};
+    use time::format_description::well_known::Rfc3339;
 
     #[actix_web::test]
     async fn test_handler_get_user_by_id() {
@@ -54,10 +53,9 @@ mod tests {
             first_name: Some("mF_9.B5f-4.1JqM".into()),
             last_name: Some("TestNameLast".into()),
             country_id: Some(c.id),
-            created_at: Some(DateTime::from_utc(
-                NaiveDateTime::from_str("2022-01-01T16:46:28").unwrap(),
-                Utc,
-            )),
+            created_at: Some(
+                TimeDateTimeWithTimeZone::parse("2022-01-01T16:46:28Z", &Rfc3339).unwrap(),
+            ),
         };
 
         // Create MockDatabase with mock query results
@@ -76,6 +74,6 @@ mod tests {
 
         let result = test::read_body(resp).await;
 
-        assert_eq!(result, Bytes::from_static(b"{\"id\":1,\"email\":\"a@n.com\",\"first_name\":\"mF_9.B5f-4.1JqM\",\"last_name\":\"TestNameLast\",\"country\":{\"id\":1,\"name\":\"Moldova\"},\"created_at\":\"2022-01-01T16:46:28Z\"}"));
+        assert_eq!(result, Bytes::from_static(b"{\"id\":1,\"email\":\"a@n.com\",\"firstName\":\"mF_9.B5f-4.1JqM\",\"lastName\":\"TestNameLast\",\"country\":{\"id\":1,\"name\":\"Moldova\"},\"createdAt\":\"2022-01-01T16:46:28Z\"}"));
     }
 }

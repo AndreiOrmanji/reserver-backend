@@ -1,3 +1,4 @@
+use crate::Migrator;
 use futures::{future::TryFutureExt, Future};
 use sea_orm_migration::prelude::*;
 
@@ -19,12 +20,11 @@ impl MigrationTrait for Migration {
             .await
     }
 
-    // if you are against backward migrations, you do not have to impl this
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        self.drop_table_if_exists_fut(manager, WorkDesk::Table)
-            .and_then(|_| self.drop_table_if_exists_fut(manager, DeliveryCenterFloor::Table))
-            .and_then(|_| self.drop_table_if_exists_fut(manager, DeliveryCenter::Table))
-            .and_then(|_| self.drop_table_if_exists_fut(manager, Country::Table))
+        Migrator::drop_table_if_exists_fut(manager, WorkDesk::Table)
+            .and_then(|_| Migrator::drop_table_if_exists_fut(manager, DeliveryCenterFloor::Table))
+            .and_then(|_| Migrator::drop_table_if_exists_fut(manager, DeliveryCenter::Table))
+            .and_then(|_| Migrator::drop_table_if_exists_fut(manager, Country::Table))
             .await
     }
 }
@@ -171,22 +171,6 @@ impl Migration {
                         .on_update(ForeignKeyAction::NoAction),
                 )
                 .to_owned(),
-        )
-    }
-
-    fn drop_table_if_exists_fut<'a, 'b: 'a, T: 'static>(
-        &'b self,
-        manager: &'a SchemaManager,
-        table: T,
-    ) -> impl Future<Output = Result<(), DbErr>> + 'a
-    where
-        T: 'static + IntoTableRef
-    {
-        manager.drop_table(
-            Table::drop()
-                .table(table)
-                .if_exists()
-                .to_owned()
         )
     }
 }

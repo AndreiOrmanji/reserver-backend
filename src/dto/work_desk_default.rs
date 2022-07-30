@@ -1,5 +1,5 @@
 use entity::work_desk::Model as WorkDesk;
-use sea_orm::entity::prelude::DateTime;
+use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -9,7 +9,7 @@ pub struct WorkDeskDefault {
     pub x: Option<i32>,
     pub y: Option<i32>,
     pub is_bookable: bool,
-    pub created_at: Option<DateTime>,
+    pub created_at: Option<TimeDateTimeWithTimeZone>,
 }
 
 impl From<&WorkDesk> for WorkDeskDefault {
