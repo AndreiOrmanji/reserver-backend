@@ -3,8 +3,10 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220701_000001_create_table;
 mod m20220701_000002_fill_tables;
+mod m20220813_000003_create_table_users;
 
 pub struct Migrator;
+
 
 #[async_trait::async_trait]
 impl MigratorTrait for Migrator {
@@ -12,6 +14,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220701_000001_create_table::Migration),
             Box::new(m20220701_000002_fill_tables::Migration),
+            Box::new(m20220813_000003_create_table_users::Migration),
         ]
     }
 }

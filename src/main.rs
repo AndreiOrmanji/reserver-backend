@@ -64,6 +64,7 @@ async fn main() -> AnyhowResult<()> {
             )
             .service(get_floor_by_id_of_center_by_id)
             .service(get_user_by_id)
+            .service(add_user)
             .default_service(web::route().to(HttpResponse::MethodNotAllowed))
     });
 

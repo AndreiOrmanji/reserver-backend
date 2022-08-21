@@ -1,8 +1,12 @@
+use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
+use entity::user;
+use log::{error, info};
+use sea_orm::ActiveModelTrait;
+use sea_orm::ActiveValue::*;
+
 use crate::dto::user::UserWithCountry;
 use crate::repository;
 use crate::AppState;
-use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
-use log::{error, info};
 
 #[get("/user/{user_id}")]
 pub async fn get_user_by_id(
@@ -25,6 +29,38 @@ pub async fn get_user_by_id(
                 HttpResponse::Ok().json(dto)
             }
         },
+    }
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct AddUserDto {
+    pub email: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub country_id: Option<u64>,
+}
+
+#[post("/user")]
+pub async fn add_user(
+    _req: HttpRequest,
+    data: web::Data<AppState>,
+    user_dto: web::Json<AddUserDto>,
+) -> impl Responder {
+    let conn = (&data).get_db_conn();
+
+    let dto = user_dto.into_inner();
+
+    let u = user::ActiveModel {
+        email: Set(dto.email),
+        first_name: Set(dto.first_name),
+        last_name: Set(dto.last_name),
+        country_id: Set(dto.country_id.and_then(|x| Some(i32::try_from(x).unwrap()))),
+        ..Default::default()
+    };
+
+    match u.insert(conn).await {
+        Err(e) => internal_server_error_with_log(e),
+        Ok(q) => HttpResponse::Ok().json(q),
     }
 }
 
